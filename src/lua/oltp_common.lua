@@ -78,7 +78,9 @@ sysbench.cmdline.options = {
           "PostgreSQL driver. The only currently supported " ..
           "variant is 'redshift'. When enabled, " ..
           "create_secondary is automatically disabled, and " ..
-          "delete_inserts is set to 0"}
+          "delete_inserts is set to 0"},
+   progress_bar = 
+      {"Disply progress bar", true}
 }
 
 -- Prepare the dataset. This command supports parallel execution, i.e. will
@@ -235,6 +237,10 @@ CREATE TABLE sbtest%d(
       end
 
       con:bulk_insert_next(query)
+
+      if sysbench.opt.progress_bar then
+         print_progress_bar(i, sysbench.opt.table_size, 50)
+      end
    end
 
    con:bulk_insert_done()
@@ -518,4 +524,17 @@ function check_reconnect()
          prepare_statements()
       end
    end
+end
+
+function print_progress_bar(completed_steps, total_steps, bar_length)
+    local progress = (completed_steps / total_steps) * 100
+    local completed = math.floor((progress / 100) * bar_length)
+    local bar = string.rep("=", completed) .. string.rep(" ", bar_length - completed)
+
+    io.write("\r[" .. bar .. "]" .. string.format("%.2f%%", progress))
+    io.flush()
+
+    if progress == 100 then
+        print()
+    end
 end
